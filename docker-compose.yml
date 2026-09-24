@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    image: cycle-tracker:latest
+    container_name: cycle-tracker
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # ОБЯЗАТЕЛЬНО смените на свои значения!
+      JWT_SECRET: "change-me-strong-random-secret"
+      JWT_ACCESS_TTL: "15m"
+      JWT_REFRESH_TTL: "7d"
+      ADMIN_PASSWORD: "change-me-admin-password"
+      # Если API и frontend на разных origin — укажите их через запятую.
+      # CORS_ORIGINS: "https://tracker.example.com"
+      # Для реальных email-напоминаний заполните SMTP, иначе письма только лог.
+      # SMTP_HOST: "smtp.example.com"
+      # SMTP_PORT: "587"
+      # SMTP_USER: "user"
+      # SMTP_PASS: "pass"
+      # SMTP_FROM: "CycleTracker <no-reply@example.com>"
+    volumes:
+      - cycle-tracker-data:/app/backend/data
+      - cycle-tracker-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  cycle-tracker-data:
+  cycle-tracker-uploads:

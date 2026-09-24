@@ -8,19 +8,18 @@ import { createNotification } from "../services/notificationService";
 
 const REFRESH_COOKIE = "refresh_token";
 
-function setRefreshCookie(res: Response, token: string): void {
-  const secure = process.env.NODE_ENV === "production";
+function setRefreshCookie(req: Request, res: Response, token: string): void {
   res.cookie(REFRESH_COOKIE, token, {
     httpOnly: true,
-    secure,
+    secure: req.secure,
     sameSite: "lax",
     path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000
   });
 }
 
-function clearRefreshCookie(res: Response): void {
-  res.clearCookie(REFRESH_COOKIE, { httpOnly: true, path: "/", sameSite: "lax" });
+function clearRefreshCookie(req: Request, res: Response): void {
+  res.clearCookie(REFRESH_COOKIE, { httpOnly: true, secure: req.secure, path: "/", sameSite: "lax" });
 }
 
 function publicUser(u: UserRow) {
@@ -65,7 +64,7 @@ export async function register(req: Request, res: Response): Promise<void> {
 
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
-  setRefreshCookie(res, refreshToken);
+  setRefreshCookie(req, res, refreshToken);
 
   res.status(201).json({ user: publicUser(user), accessToken });
 }
@@ -85,7 +84,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
-  setRefreshCookie(res, refreshToken);
+  setRefreshCookie(req, res, refreshToken);
 
   res.json({ user: publicUser(user), accessToken });
 }
@@ -102,12 +101,12 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
-  setRefreshCookie(res, refreshToken);
+  setRefreshCookie(req, res, refreshToken);
 
   res.json({ user: publicUser(user), accessToken });
 }
 
-export async function logout(_req: AuthedRequest, res: Response): Promise<void> {
-  clearRefreshCookie(res);
+export async function logout(req: AuthedRequest, res: Response): Promise<void> {
+  clearRefreshCookie(req, res);
   res.json({ ok: true });
 }
